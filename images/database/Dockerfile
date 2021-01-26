@@ -23,10 +23,6 @@
 # ---------------
 FROM oraclelinux:7-slim as base
 
-# Maintainer
-# ----------
-MAINTAINER Gerald Venzl <gerald.venzl@oracle.com>
-
 # Environment variables required for this build (do NOT change)
 # -------------------------------------------------------------
 ENV ORACLE_BASE=/opt/oracle \
@@ -43,6 +39,8 @@ ENV PATH=$ORACLE_HOME/bin:$ORACLE_HOME/OPatch/:/usr/sbin:$PATH \
 COPY setupLinuxEnv.sh checkSpace.sh $INSTALL_DIR/
 COPY runOracle.sh startDB.sh createDB.sh dbca.rsp.tmpl setPassword.sh checkDBStatus.sh runUserScripts.sh $ORACLE_BASE/
 
+RUN sed -i -e 's/\r$//' $INSTALL_DIR/*.sh
+
 RUN chmod -cv ug+x $INSTALL_DIR/*.sh && \
     sync && \
     $INSTALL_DIR/checkSpace.sh && \
@@ -56,6 +54,8 @@ FROM base AS builder
 
 COPY --chown=oracle:dba db_inst.rsp.tmpl installPerl.sh installDBBinaries.sh $INSTALL_DIR/
 
+COPY linuxamd64_12102_database_1of2.zip linuxamd64_12102_database_2of2.zip $INSTALL_DIR/
+
 # Install DB software binaries
 USER oracle
 
@@ -65,10 +65,10 @@ ARG INSTALL_FILE_1="linuxamd64_12102_database_1of2.zip"
 ARG INSTALL_FILE_2="linuxamd64_12102_database_2of2.zip"
 ARG EDITION=EE
 
+RUN sed -i -e 's/\r$//' $INSTALL_DIR/*.sh
+
 RUN chmod ug+x $INSTALL_DIR/*.sh \
  && cd $INSTALL_DIR \
- && curl -fL#O "$REPO_URL/{$INSTALL_FILE_1,$INSTALL_FILE_2}" \
- && cd - \
  && sync \
  && $INSTALL_DIR/installDBBinaries.sh $EDITION
 
@@ -83,6 +83,8 @@ COPY --chown=oracle:dba --from=builder $ORACLE_BASE $ORACLE_BASE
 RUN $ORACLE_BASE/oraInventory/orainstRoot.sh && \
     $ORACLE_HOME/root.sh
 
+RUN chmod +x $ORACLE_BASE/*.sh
+
 # Switch to Oracle user
 USER oracle
 
@@ -93,6 +95,8 @@ ENV DBCA_TEMPLATE_FILE=General_Purpose.dbc \
 
 # Switch to home directory
 WORKDIR /home/oracle
+
+RUN sed -i -e 's/\r$//' $ORACLE_BASE/*.sh
 
 VOLUME ["$ORACLE_BASE/oradata"]
 

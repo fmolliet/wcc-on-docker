@@ -37,12 +37,12 @@ trap stopServer SIGINT SIGTERM SIGKILL
 
 # Check for required environment variables
 for required in \
-  DB_USERNAME DB_PASSWORD DB_HOST DB_PORT DB_SERVICE RCU_PREFIX MANAGED_SERVER
+  DB_USERNAME DB_PASSWORD DB_HOST DB_PORT DB_SERVICE RCU_PREFIX MANAGED_SERVER SCRIPTS_DIR
 do [[ ${!required} ]] || die "Please set ${required}!"
 done
 
 # Wait for database listener
-wait-for -h $DB_HOST -p $DB_PORT -t $WAIT_TIMEOUT
+$SCRIPTS_DIR/wait-for -h $DB_HOST -p $DB_PORT -t $WAIT_TIMEOUT
 
 # Sleep for a bit to let database register with listener in case of new database
 sleep 10
@@ -107,7 +107,7 @@ fi
 bin/startWebLogic.sh &
 
 # Wait for admin server
-wait-for -h localhost -p 7001 -t $WAIT_TIMEOUT
+$SCRIPTS_DIR/wait-for -h localhost -p 7001 -t $WAIT_TIMEOUT
 
 # Sleep for a bit
 sleep 10

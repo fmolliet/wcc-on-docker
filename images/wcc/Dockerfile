@@ -7,7 +7,7 @@
 #
 # Pull base image from the Oracle Container Registry or Docker Store and tag the name as 'oracle/fmw-infrastructure:12.2.1.3'
 # -------------------------------------------------------------
-FROM oracle/fmw-infrastructure:12.2.1.3
+FROM oracle/fmw-infrastructure:12.2.1.4
 
 # Environment variables required for this build (do NOT change)
 # -------------------------------------------------------------
@@ -22,9 +22,9 @@ ENV ORACLE_HOME=/u01/oracle \
 	DOMAIN_ROOT=/u01/oracle/user_projects/domains \
 	PATH=$PATH:$JAVA_HOME/bin:/u01/oracle/oracle_common/common/bin \
 	CONTAINER_SCRIPT_DIR=/u01/oracle/container-scripts \
-	CONTENT_PKG=fmw_12.2.1.3.0_wccontent_Disk1_1of1.zip \
+	CONTENT_PKG=fmw_12.2.1.4.0_wccontent_Disk1_1of1.zip \
 	CONTENT_SHA1=945b1514a7f8fcc48484939458bc6898b0a37cdc \
-	CONTENT_JAR=fmw_12.2.1.3.0_wccontent.jar \
+	CONTENT_JAR=fmw_12.2.1.4.0_wccontent.jar \
 	ADMIN_PORT=7001 \
 	WCCONTENT_PORT=16200 \
 	ADMIN_SSL_PORT=9001 \
@@ -36,6 +36,7 @@ ENV ORACLE_HOME=/u01/oracle \
 # Copy packages and scripts
 # -------------------------------------------------------------
 COPY install.file oraInst.loc /u01/
+COPY $CONTENT_PKG $ORACLE_HOME/
 
 #Install packages and adjust file permissions, go to /u01 as user 'oracle' to proceed with WLS installation
 # -------------------------------------------------------------
@@ -49,9 +50,7 @@ USER oracle
 ARG BASE_URL=http://localhost:8000/oracle/fmw
 
 # Download install file and install
-RUN curl -fLO# "$BASE_URL/$CONTENT_PKG" \
- && printf "%s *%s\n" $CONTENT_SHA1 $CONTENT_PKG | sha1sum -c \
- && unzip $CONTENT_PKG \
+RUN unzip $CONTENT_PKG \
  && $JAVA_HOME/bin/java -jar $CONTENT_JAR -silent -force -novalidation -ignoreSysPrereqs \
       -responseFile /u01/install.file -invPtrLoc /u01/oraInst.loc -jreLoc $JAVA_HOME ORACLE_HOME=$ORACLE_HOME \
  && rm -rf $CONTENT_JAR $CONTENT_PKG /u01/oraInst.loc /u01/install.file
@@ -60,16 +59,26 @@ WORKDIR $ORACLE_HOME
 
 COPY --chown=oracle wait-for createDomain.py createDomainAndStart.sh $CONTAINER_SCRIPT_DIR/
 
-# Make scripts executable
-RUN chmod +x $CONTAINER_SCRIPT_DIR/*.sh
-
 # Set defaults
 ENV ADMIN_USERNAME=weblogic DB_PORT=1521 DOMAIN_NAME=wcc RUN_RCU=1 WAIT_TIMEOUT=1800 \
     MANAGED_SERVER=UCM_server1 \
     DOMAIN_TEMPLATE="Oracle Universal Content Management - Content Server"
 
-# Define default command to start bash.
-CMD ["createDomainAndStart.sh"]
+USER root
 
+RUN sed -i -e 's/\r$//' $CONTAINER_SCRIPT_DIR/*.sh \ 
+	&& chmod +x $CONTAINER_SCRIPT_DIR/*.sh
+
+WORKDIR $CONTAINER_SCRIPT_DIR
+# Define default command to start bash.
+RUN ls \
+	&& ls /u01/ \
+	&& ls $ORACLE_HOME/ \
+	&& ls $CONTAINER_SCRIPT_DIR/ \
+	&& find . -name createDomainAndStart.sh
+
+CMD ["./createDomainAndStart.sh"]
+
+RUN sed -i -e 's/\r$//' $CONTAINER_SCRIPT_DIR/wait-for
 # Expose all Ports
 EXPOSE $ADMIN_PORT $ADMIN_SSL_PORT $WCCONTENT_PORT $WCCONTENT_SSL_PORT
