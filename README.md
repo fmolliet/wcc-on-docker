@@ -32,7 +32,7 @@ docker login container-registry.oracle.com
 
 Ao inserir user e senha então baixe a imagem:
 ```sh
-docker pull container-registry.oracle.com/middleware/fmw-infrastructure:12.2.1.3
+docker pull container-registry.oracle.com/middleware/fmw-infrastructure:12.2.1.4
 ```
 e depois: 
 ```sh
