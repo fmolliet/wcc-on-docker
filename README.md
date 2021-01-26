@@ -18,19 +18,20 @@ E deixe dentro de `./images/wcc`
 
 ## Imagem de docker necessária ⚙
 
-1)Cadastra-se no oracle container registry para acessar as imagens da oracle.
+- Cadastra-se no oracle container registry para acessar as imagens da oracle.
 
 https://container-registry.oracle.com/
 
-Após isso vá em Middleware Repositories > fmw-infrastructure e aceite os termos.
+- Após isso vá em Middleware Repositories > fmw-infrastructure e aceite os termos.
 
-Nisso vá no terminal e faça o login nos repository da oracle:
+- Nisso vá no terminal e faça o login nos repository da oracle:
 
 ```sh
 docker login container-registry.oracle.com
 ```
 
-Ao inserir user e senha então baixe a imagem:
+- Ao inserir user e senha então baixe a imagem:
+
 ```sh
 docker pull container-registry.oracle.com/middleware/fmw-infrastructure:12.2.1.4
 ```
@@ -43,7 +44,7 @@ docker tag container-registry.oracle.com/middleware/fmw-infrastructure:12.2.1.4 
 
 ```docker-compose build```
 
-## To start:
+## Para iniciar:
 
 ```docker-compose up```
 
